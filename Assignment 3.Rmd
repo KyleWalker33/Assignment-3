@@ -1,0 +1,243 @@
+---
+title: "Assignment 3"
+author: "Kyle Walker"
+date: "9/19/2019"
+output: 
+      pdf_document: default
+      rmarkdown:: github_document
+---
+#### 1.Read the titanic data set as a tibble. Redo questions 13 to 23 in the Assignment 1 using dplyr.
+##### Notice: you may want to use logical operators such as:
+###### Operators Discription
+###### != not equal to
+###### !x Not x
+###### x | y x OR y
+###### x & y x AND y
+```{r}
+library(dplyr)
+library(tidyverse)
+library(readr)
+titanic <- read_csv(file = "C:/Users/student/Documents/Senior Year/MATH 421/titanic.csv")
+```
+##### 13 Calculate the mean age of female passengers:
+```{r}
+titanic %>% 
+  filter(Sex == "female") %>%
+      summarize(mean(Age, na.rm = T))
+```
+##### 14. Calculate the median fare of the passengers in Class 1
+```{r}
+titanic %>% 
+  filter(Pclass==1) %>% 
+    summarize(median(Fare, na.rm=T))
+```
+##### 15. Calculate the median fare of the female passengers that are not in Class 1
+```{r}
+titanic %>% 
+  filter(Pclass!=1, Sex=='female') %>% 
+    summarize(median(Fare,na.rm =T))
+```
+##### 16. Calculate the median age of survived passengers who are female and Class 1 or Class 2
+```{r}
+titanic %>% 
+  filter(Pclass==1 | Pclass== 2, Sex=='female') %>% 
+    summarize(median(Fare, na.rm=T))
+```
+##### 17. Calculate the mean fare of female teenagers survived passengers
+```{r}
+titanic %>% 
+  filter(Sex=='female', Age >= 13, Age < 20, Survived == 1) %>% 
+    summarize(mean(Fare, na.rm=T))
+```
+#### 18. Calculate the mean fare of female teenagers survived passengers for each class
+```{r}
+titanic %>% 
+  filter(Sex=='female', Survived==1) %>% 
+    group_by(Pclass) %>% 
+      summarize(mean(Fare, na.rm=T))
+```
+##### 19. Calculate the ratio of Survived and not Survived for passengers who are who pays more than the average fare
+```{r}
+titanic %>% 
+  filter(Fare>mean(Fare), Survived==0 | Survived == 1) %>% 
+    select(Survived) %>% 
+      summarize(sum(Survived) / length(Survived))
+    
+```
+##### 20. Add column that standardizes the fare (subtract the mean and divide by standard deviation) and name it sfare
+```{r}
+titanic %>%
+  mutate(sfare = ((Fare - mean(Fare)) / sd(Fare) ))
+```
+##### 21. Add categorical variable named cfare that takes value cheap for passengers paying less the average fare and takes value expensive for passengers paying more than the average fare.
+```{r}
+titanic %>% 
+  mutate(cfare = cut(Fare, breaks= c(0, mean(Fare), Inf), labels = c("cheap", "expensive") ))
+```
+##### 22. Add categorical variable named cage that takes value 0 for age 0-10, 1 for age 10-20, 2 for age 20-30, and so on
+```{r}
+titanic %>% 
+  mutate(cage = cut(Age, breaks = c(0,10,20,30,40,50,60,70,80,90,Inf), labels = c(0,1,2,3,4,5,6,7,8,9)))
+```
+#### 23. Show the frequency of Ports of Embarkation. It appears that there are two missing values in the Embarked variable. Assign the most frequent port to the missing ports. Hint: Use the levels function to modify the categories of categorical variables.
+```{r}
+titanic %>% 
+  group_by(Embarked) %>% 
+    count(Embarked)
+titanic %>%
+    mutate(Embarked = replace_na(Embarked, "S")) %>% 
+      count(Embarked)
+
+```
+
+#### 2. Using Dplyr and in Assignment 2, redo 4 using sample_n function, redo 5 using glimpse, redo 11, 12 and 13. For 11, 12 and 13, you may want to use the combo group_by and summarise
+```{r}
+library(readxl)
+c2015 <- read_excel("C:/Users/student/Documents/Senior Year/MATH 421/Assignment 2/c2015.xlsx")
+```
+##### 4. Use dim function to check the dimension of the data. Since this data is quite big, a common practice is to randomly subset the data to analyze. Use sample function to create a new dataset that has a random 1000 observations from the original data. Use set.seed(2019) before using the sample function to set the seed for the randomness so that everyone in class is working with the same random subset of the data.
+```{r}
+set.seed(2019)
+c2015 %>% 
+  sample_n(1000)
+```
+##### 5. Use summary function to have a quick look at the data. You will notice there is one variable is actually a constant. Remove that variable from the data.
+```{r}
+c2015 %>% 
+glimpse()
+select(c2015, -YEAR)
+```
+##### 11. Compare the average speed of those who had "No Apprent Injury" and the rest. What do you observe?
+```{r}
+library(stringr)
+c2015$TRAV_SP <- str_replace(c2015$TRAV_SP, " MPH", "")
+c2015$TRAV_SP <- str_replace(c2015$TRAV_SP, "Not Rep", "")
+c2015$TRAV_SP <- str_replace(c2015$TRAV_SP, "Unknown", "")
+c2015$TRAV_SP <- as.numeric(c2015$TRAV_SP)
+c2015 = c2015[!(is.na(c2015$TRAV_SP)),]
+
+```
+
+```{r}
+c2015 %>% 
+  group_by(INJ_SEV) %>% 
+    summarize(mean(TRAV_SP, na.rm=T))
+```
+
+##### 12. Use the SEAT_POS variable to filter the data so that there is only drivers in the dataset. Compare the average speed of man drivers and woman drivers. Comment on the results.
+```{r}
+c2015 %>% 
+  filter(SEAT_POS == "Front Seat, Left Side") %>% 
+    group_by(SEX) %>% 
+      summarize(mean(TRAV_SP, na.rm = T))
+#The males drive faster on average than females
+```
+
+##### 13. Compare the average speed of drivers who drink and those who do not. Comment on the results.
+```{r}
+c2015 %>% 
+  filter(DRINKING == "Yes (Alcohol Involved)" | DRINKING == "No (Alcohol Not Involved)") %>% 
+    group_by(DRINKING) %>% 
+      summarize(mean(TRAV_SP))
+#Drivers who are drinking drive faster
+```
+
+#### 3. Calculate the travel speed (TRAV_SP variable) by day. Compare the travel speed of the first 5 days and the last 5 days of months.
+```{r}
+c2015 %>% 
+  group_by(DAY) %>% 
+    summarize(mean(TRAV_SP))
+c2015 %>%
+  filter(DAY <= 5 | DAY >= 26) %>% 
+    group_by(DAY <= 5, DAY >= 26) %>% 
+      summarize(mean(TRAV_SP, na.rm=T))
+#There is no significant difference
+```
+
+#### 4. Calculate the travel speed (TRAV_SP variable) by day of the week. Compare the travel speed of the weekdays and weekends.
+```{r}
+c2015 %>% 
+  group_by(DAY_WEEK) %>% 
+    summarize(mean(TRAV_SP,na.rm=T))
+#The weekends have a higher average travel speed than the weekdays
+```
+
+#### 5. Find the top 5 states with greatest travel speed.
+```{r}
+c2015 %>% 
+  group_by(STATE) %>% 
+    summarize(Max_SPD = max(TRAV_SP)) %>% 
+      top_n(5, Max_SPD)
+```
+
+#### 6. Rank the travel speed by MONTH.
+```{r}
+c2015 %>% 
+  group_by(MONTH) %>% 
+    summarize(avg_SPD = mean(TRAV_SP)) %>% 
+      arrange(desc(avg_SPD))
+```
+
+#### 7. Find the average speed of teenagers in December.
+```{r}
+c2015 %>% 
+  filter(AGE <= 20, AGE >= 13, MONTH == "December") %>% 
+    summarize(mean(TRAV_SP, na.rm= T))
+```
+
+#### 8. Find the month that female drivers drive fastest on average.
+```{r}
+c2015 %>% 
+  filter(SEX=="Female") %>% 
+    group_by(MONTH) %>% 
+      summarize(avg_SPD = mean(TRAV_SP)) %>% 
+        top_n(1, avg_SPD)
+```
+
+#### 9. Find the month that male driver drive slowest on average.
+```{r}
+c2015 %>% 
+  filter(SEX=="Male") %>% 
+    group_by(MONTH) %>% 
+      summarize(avg_SPD = mean(TRAV_SP)) %>% 
+        top_n(-1, avg_SPD)
+```
+
+#### 10. Create a new column containing information about the season of the accidents. Compare the percentage of Fatal Injury by seasons.
+```{r}
+c2015 %>% 
+  mutate(Season = recode(MONTH,
+                          "December" = "Winter",
+                          "January" = "Winter",
+                          "February" = "Winter",
+                          "March"= "Spring",
+                          "April"= "Spring",
+                          "May" = "Spring",
+                          "June"= "Summer",
+                          "July"= "Summer",
+                          "August" = "Summer",
+                          "September"= "Fall",
+                          "October"= "Fall",
+                          "November" = "Fall")
+         ) %>%
+      filter(INJ_SEV == "Fatal Injury (K)") %>% 
+        group_by(Season) %>% 
+          summarize(Fatalities = n()) %>% 
+              mutate(Total = Fatalities / sum(Fatalities))
+      
+
+#Summer has the highest frequency of fatalities
+        
+  
+```
+
+#### 11. Compare the percentage of fatal injuries for different type of deformations (DEFORMED variable)
+```{r}
+c2015 %>% 
+  group_by(DEFORMED) %>% 
+    summarize(Fatalities = n()) %>% 
+      mutate(Total = Fatalities / sum(Fatalities))
+#The majority of Deformed damage is Disabling Damage
+```
+
+
