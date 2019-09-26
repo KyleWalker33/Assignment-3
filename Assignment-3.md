@@ -36,14 +36,14 @@ library(dplyr)
 library(tidyverse)
 ```
 
-    ## -- Attaching packages ----------------------------------------------- tidyverse 1.2.1 --
+    ## -- Attaching packages --------------------------------------- tidyverse 1.2.1 --
 
     ## v ggplot2 3.2.1     v readr   1.3.1
     ## v tibble  2.1.3     v purrr   0.3.2
     ## v tidyr   1.0.0     v stringr 1.4.0
     ## v ggplot2 3.2.1     v forcats 0.4.0
 
-    ## -- Conflicts -------------------------------------------------- tidyverse_conflicts() --
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
     ## x dplyr::filter() masks stats::filter()
     ## x dplyr::lag()    masks stats::lag()
 
@@ -154,14 +154,13 @@ titanic %>%
 ``` r
 titanic %>% 
   filter(Fare>mean(Fare), Survived==0 | Survived == 1) %>% 
-    select(Survived) %>% 
-      summarize(sum(Survived) / length(Survived))
+    summarize(sum(Survived) / (length(Survived)-sum(Survived)))
 ```
 
     ## # A tibble: 1 x 1
-    ##   `sum(Survived)/length(Survived)`
-    ##                              <dbl>
-    ## 1                            0.597
+    ##   `sum(Survived)/(length(Survived) - sum(Survived))`
+    ##                                                <dbl>
+    ## 1                                               1.48
 
 ##### 20\. Add column that standardizes the fare (subtract the mean and divide by standard deviation) and name it sfare
 
@@ -390,6 +389,10 @@ c2015 %>%
     ## 6 Suspected Minor Injury(B)                         51.7
     ## 7 Suspected Serious Injury(A)                       54.6
     ## 8 Unknown                                           47.9
+
+``` r
+#No Apparent Injury (O) had the second lowest average speed
+```
 
 ##### 12\. Use the SEAT\_POS variable to filter the data so that there is only drivers in the dataset. Compare the average speed of man drivers and woman drivers. Comment on the results.
 
